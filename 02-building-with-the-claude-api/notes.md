@@ -2,11 +2,13 @@
 
 Course notes and progress for the Anthropic Academy "Building with the Claude API" course.
 
-## Lesson 1 — Accessing the API
+## Lesson 1 — Accessing Claude with the API
+
+### Accessing the API
 
 **Source:** https://anthropic.skilljar.com/claude-with-the-anthropic-api/287726
 
-### What you'll learn
+#### What you'll learn
 
 *Estimated time: 5 minutes 18 seconds (video)*
 
@@ -20,13 +22,13 @@ By the end of this lesson you'll be able to:
 
 ---
 
-### Video Summary *(5 min 18 sec)*
+#### Video Summary *(5 min 18 sec)*
 
 When building applications with Claude, understanding the complete request lifecycle helps you make better architectural decisions and debug issues more effectively. This lesson walks through what happens from the moment a user clicks "send" in your chat interface to when Claude's response appears on screen.
 
 ---
 
-### The Five-Step Request Flow
+#### The Five-Step Request Flow
 
 Every interaction with Claude follows a predictable pattern with five distinct phases:
 
@@ -38,7 +40,7 @@ Every interaction with Claude follows a predictable pattern with five distinct p
 
 ---
 
-### Why You Need a Server
+#### Why You Need a Server
 
 You should never make requests to the Anthropic API directly from client-side code. Here's why:
 
@@ -50,7 +52,7 @@ Instead, your web or mobile app sends requests to your own server, which then co
 
 ---
 
-### Making API Requests
+#### Making API Requests
 
 When your server contacts the Anthropic API, you can use either an official SDK or make plain HTTP requests. Anthropic provides SDKs for Python, TypeScript, JavaScript, Go, and Ruby.
 
@@ -63,7 +65,7 @@ Every request must include these essential fields:
 
 ---
 
-### Inside Claude's Processing
+#### Inside Claude's Processing
 
 Once Anthropic receives your request, Claude processes it through four main stages:
 
@@ -74,7 +76,7 @@ Once Anthropic receives your request, Claude processes it through four main stag
 
 ---
 
-### When Claude Stops Generating
+#### When Claude Stops Generating
 
 After each token, Claude checks several conditions to decide whether to continue:
 
@@ -84,7 +86,7 @@ After each token, Claude checks several conditions to decide whether to continue
 
 ---
 
-### The API Response
+#### The API Response
 
 When generation completes, the API sends back a structured response containing:
 
@@ -96,7 +98,7 @@ Your server receives this response and forwards the generated text back to your 
 
 ---
 
-### Key Takeaways
+#### Key Takeaways
 
 Understanding this flow helps you:
 
@@ -104,4 +106,47 @@ Understanding this flow helps you:
 - Set appropriate token limits for your use case.
 - Handle different stop reasons in your application logic.
 - Debug issues by understanding where they might occur in the pipeline.
+
+---
+
+### Getting an API key
+
+**Source:** https://anthropic.skilljar.com/claude-with-the-anthropic-api/296766
+
+#### What you'll learn
+
+By the end of this lesson you'll be able to:
+
+- Navigate the Anthropic Console to create and manage API keys
+- Safely copy and store an API key for use in subsequent lessons
+
+---
+
+#### Overview
+
+This is a written step-by-step guide for generating your Anthropic API key before making your first request. The key is only shown once, so follow carefully.
+
+---
+
+#### Step-by-Step: Creating an API Key
+
+**Step 1 — Navigate to the Anthropic API Console**
+
+Go to [https://console.anthropic.com/](https://console.anthropic.com/) and log in to your Anthropic account.
+
+**Step 2 — Click the "Get API Keys" button**
+
+Found towards the top right of the main dashboard page.
+
+**Step 3 — Click the "Create Key" button**
+
+Located at the top right of the API Keys page.
+
+**Step 4 — Enter a workspace and name for your key**
+
+Create the key in the `Default` workspace and give it a recognisable name (e.g. `Anthropic Course`). The name is only used to help you identify keys you generate.
+
+**Step 5 — Copy the key**
+
+Your API key will be displayed in a pop-up window. Copy it immediately and store it securely — **this key is only shown once**. If you accidentally close the window, delete the old key and generate a new one.
 
