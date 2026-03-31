@@ -2,10 +2,6 @@
 
 Course notes and progress for the Anthropic Academy "Introduction to Agent Skills" course.
 
-## Exercises
-
----
-
 ## Lesson 1 — What are skills?
 
 **Source:** https://anthropic.skilljar.com/introduction-to-agent-skills/434525
