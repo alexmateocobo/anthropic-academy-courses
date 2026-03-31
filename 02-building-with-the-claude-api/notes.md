@@ -150,3 +150,111 @@ Create the key in the `Default` workspace and give it a recognisable name (e.g. 
 
 Your API key will be displayed in a pop-up window. Copy it immediately and store it securely — **this key is only shown once**. If you accidentally close the window, delete the old key and generate a new one.
 
+---
+
+### Making a request
+
+**Source:** https://anthropic.skilljar.com/claude-with-the-anthropic-api/287725
+
+#### What you'll learn
+
+*Estimated time: 6 minutes 2 seconds (video)*
+
+By the end of this lesson you'll be able to:
+
+- Set up a Python environment with the Anthropic SDK and `python-dotenv`
+- Store and load an API key securely using a `.env` file
+- Initialise an `Anthropic` client and call `client.messages.create()`
+- Understand the three required parameters: `model`, `max_tokens`, and `messages`
+- Extract the generated text from the response object
+
+---
+
+#### Video Summary *(6 min 2 sec)*
+
+Making your first request to the Anthropic API is straightforward once you understand the basic setup and structure. This lesson walks through the essential steps to get Claude responding to your prompts using Python.
+
+---
+
+#### Setting Up Your Environment
+
+Before making any API calls, install the required packages in your Jupyter notebook:
+
+```python
+%pip install anthropic python-dotenv
+```
+
+Create a `.env` file in the same directory as your notebook to store your API key securely:
+
+```
+ANTHROPIC_API_KEY="your-api-key-here"
+```
+
+This keeps your API key out of your code and prevents accidentally committing it to version control. Always add `.env` to your `.gitignore` file.
+
+Then load the environment variables and create your API client:
+
+```python
+from dotenv import load_dotenv
+load_dotenv()
+
+from anthropic import Anthropic
+
+client = Anthropic()
+model = "claude-sonnet-4-0"
+```
+
+---
+
+#### The `create` Function
+
+The core of making API requests is `client.messages.create()`. It requires three parameters:
+
+- **`model`** — the name of the Claude model to use.
+- **`max_tokens`** — a safety limit on response length, not a target. If set to `1000`, Claude stops after 1,000 tokens even if it has more to say. Claude does not try to reach this limit — it writes what it considers appropriate and stops if it hits the maximum.
+- **`messages`** — the conversation history sent to Claude (see below).
+
+---
+
+#### Understanding Messages
+
+Messages represent the conversation between you and Claude, similar to a chat application. There are two types:
+
+- **User messages** — content you send to Claude.
+- **Assistant messages** — responses Claude has generated.
+
+Each message is a dictionary with a `role` (`"user"` or `"assistant"`) and `content` (the actual text).
+
+---
+
+#### Making Your First Request
+
+```python
+message = client.messages.create(
+    model=model,
+    max_tokens=1000,
+    messages=[
+        {
+            "role": "user",
+            "content": "What is quantum computing? Answer in one sentence"
+        }
+    ]
+)
+```
+
+Claude processes the request and returns a response object containing the generated text along with metadata about the request.
+
+---
+
+#### Extracting the Response
+
+The response object contains a lot of information, but you usually just want the generated text. Access it with:
+
+```python
+message.content[0].text
+```
+
+This returns clean, readable output — for example: *"Quantum computing is a type of computation that leverages quantum mechanics principles like superposition and entanglement to process information using quantum bits (qubits), potentially solving certain complex problems exponentially faster than classical computers."*
+
+With these basics in place, you can start experimenting with different prompts and building more complex interactions with Claude.
+
