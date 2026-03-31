@@ -258,3 +258,99 @@ This returns clean, readable output — for example: *"Quantum computing is a ty
 
 With these basics in place, you can start experimenting with different prompts and building more complex interactions with Claude.
 
+---
+
+### Multi-Turn conversations
+
+**Source:** https://anthropic.skilljar.com/claude-with-the-anthropic-api/287735
+
+#### What you'll learn
+
+*Estimated time: 8 minutes 54 seconds (video)*
+
+By the end of this lesson you'll be able to:
+
+- Explain why Claude is stateless and what that means for conversation management
+- Maintain conversation history manually by building and sending a complete message list
+- Implement three helper functions (`add_user_message`, `add_assistant_message`, `chat`) to manage multi-turn exchanges
+
+---
+
+#### Video Summary *(8 min 54 sec)*
+
+When working with the Anthropic API, there is a crucial concept you need to understand: Claude does not store any conversation history. Each request is completely independent, with no memory of previous exchanges. If you want multi-turn conversations where Claude remembers earlier context, you need to handle conversation state yourself.
+
+---
+
+#### The Problem with Stateless Conversations
+
+If you ask Claude "What is quantum computing?" and get a response, then follow up with "Write another sentence" — Claude has no idea what you're referring to. It will produce a sentence about something completely random because it has no memory of the quantum computing discussion.
+
+---
+
+#### How Multi-Turn Conversations Work
+
+To maintain conversation context, you need to do two things:
+
+1. **Manually maintain a list of all messages** in your code.
+2. **Send the complete message history with every request.**
+
+The flow that works:
+
+1. Send your initial user message to Claude.
+2. Take Claude's response and add it to your message list as an assistant message.
+3. Add your follow-up question as another user message.
+4. Send the entire conversation history to Claude.
+
+---
+
+#### Building Helper Functions
+
+Three helper functions make conversation management straightforward:
+
+```python
+def add_user_message(messages, text):
+    user_message = {"role": "user", "content": text}
+    messages.append(user_message)
+
+def add_assistant_message(messages, text):
+    assistant_message = {"role": "assistant", "content": text}
+    messages.append(assistant_message)
+
+def chat(messages):
+    message = client.messages.create(
+        model=model,
+        max_tokens=1000,
+        messages=messages,
+    )
+    return message.content[0].text
+```
+
+---
+
+#### Putting It All Together
+
+```python
+# Start with an empty message list
+messages = []
+
+# Add the initial user question
+add_user_message(messages, "Define quantum computing in one sentence")
+
+# Get Claude's response
+answer = chat(messages)
+
+# Add Claude's response to the conversation history
+add_assistant_message(messages, answer)
+
+# Add a follow-up question
+add_user_message(messages, "Write another sentence")
+
+# Get the follow-up response with full context
+final_answer = chat(messages)
+```
+
+Now Claude understands that "Write another sentence" refers to expanding on the quantum computing definition, because the complete conversation context is provided with each request.
+
+These helper functions will be useful throughout your work with Claude, making it much easier to build applications that can maintain meaningful conversations over multiple exchanges.
+
