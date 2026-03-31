@@ -354,3 +354,112 @@ Now Claude understands that "Write another sentence" refers to expanding on the 
 
 These helper functions will be useful throughout your work with Claude, making it much easier to build applications that can maintain meaningful conversations over multiple exchanges.
 
+---
+
+### System prompts
+
+**Source:** https://anthropic.skilljar.com/claude-with-the-anthropic-api/287733
+
+#### What you'll learn
+
+*Estimated time: 6 minutes 20 seconds (video)*
+
+By the end of this lesson you'll be able to:
+
+- Explain what system prompts are and why they matter for application behaviour
+- Pass a system prompt into `client.messages.create()` via the `system` parameter
+- Build a flexible `chat()` function that conditionally includes a system prompt
+- Contrast Claude's output with and without a system prompt
+
+---
+
+#### Video Summary *(6 min 20 sec)*
+
+System prompts are a powerful way to customise how Claude responds to user input. Instead of generic answers, you can shape Claude's tone, style, and approach to match your specific use case. This lesson uses a math tutor chatbot as a concrete example to show the dramatic difference a system prompt makes.
+
+---
+
+#### Why System Prompts Matter
+
+Consider building a math tutor chatbot. When a student asks "How do I solve 5x + 2 = 3 for x?", you want Claude to act like a real tutor, not just give the answer. A good math tutor should:
+
+- Initially give hints rather than complete solutions.
+- Patiently walk students through problems step by step.
+- Show solutions for similar problems as examples.
+
+You do not want Claude to immediately give direct answers or tell students to just use a calculator.
+
+---
+
+#### How System Prompts Work
+
+System prompts provide Claude with guidance on how to respond. You define them as plain strings and pass them into `client.messages.create()` via the `system` parameter. Key benefits:
+
+- Claude will try to respond in the same way someone in the specified role would respond.
+- Helps keep Claude on task and consistent across turns.
+
+Basic structure:
+
+```python
+system_prompt = """
+You are a patient math tutor.
+Do not directly answer a student's questions.
+Guide them to a solution step by step.
+"""
+
+client.messages.create(
+    model=model,
+    messages=messages,
+    max_tokens=1000,
+    system=system_prompt
+)
+```
+
+---
+
+#### Seeing the Difference
+
+Without a system prompt, Claude gives a complete step-by-step solution immediately — helpful, but it doesn't encourage the student to think through the problem.
+
+With the math tutor system prompt, Claude's response changes dramatically. Instead of the full solution, it asks guiding questions like: *"What do you think would be a good first step to isolate x? Consider what operation we might need to perform on both sides to start moving terms around."*
+
+---
+
+#### Building a Flexible Chat Function
+
+Rather than hard-coding system prompts, make your `chat()` function more reusable by accepting them as an optional parameter:
+
+```python
+def chat(messages, system=None):
+    params = {
+        "model": model,
+        "max_tokens": 1000,
+        "messages": messages,
+    }
+
+    if system:
+        params["system"] = system
+
+    message = client.messages.create(**params)
+    return message.content[0].text
+```
+
+The `system=None` check is important: Claude's API does not accept `system=None`, so the parameter must be conditionally included only when a value is provided.
+
+Usage:
+
+```python
+# Without system prompt
+answer = chat(messages)
+
+# With system prompt
+system = """
+You are a patient math tutor.
+Do not directly answer a student's questions.
+Guide them to a solution step by step.
+"""
+answer = chat(messages, system=system)
+```
+
+System prompts are essential for creating AI applications that behave consistently and appropriately for their intended purpose. They transform generic AI responses into specialised, role-appropriate interactions.
+
