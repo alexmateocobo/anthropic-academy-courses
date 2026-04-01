@@ -463,3 +463,214 @@ answer = chat(messages, system=system)
 
 System prompts are essential for creating AI applications that behave consistently and appropriately for their intended purpose. They transform generic AI responses into specialised, role-appropriate interactions.
 
+---
+
+### Temperature
+
+**Source:** https://anthropic.skilljar.com/claude-with-the-anthropic-api/287728
+
+#### What you'll learn
+
+*Estimated time: 6 minutes 7 seconds (video)*
+
+By the end of this lesson you'll be able to:
+
+- Explain how Claude's token sampling process works
+- Describe what temperature controls and the effect of values near 0 vs. near 1
+- Select an appropriate temperature range for a given task type
+- Add the `temperature` parameter to your `chat()` function
+
+---
+
+#### Video Summary *(6 min 7 sec)*
+
+Temperature is a powerful parameter that controls how predictable or creative Claude's responses will be. Understanding how to use it effectively can dramatically improve your AI applications.
+
+---
+
+#### How Claude Generates Text
+
+When you send Claude a prompt, it goes through three key steps:
+
+1. **Tokenization** — breaking your input into smaller chunks.
+2. **Prediction** — calculating probabilities for possible next words (e.g. "about" 30%, "would" 20%, "of" 10%, …).
+3. **Sampling** — choosing a token based on those probabilities, then repeating the process to build a complete response.
+
+---
+
+#### What Temperature Does
+
+Temperature is a decimal value between 0 and 1 that directly influences the sampling probabilities — think of it as a "creativity dial".
+
+- **Low temperature (near 0)** — Claude becomes very deterministic, almost always picking the highest-probability token. At `0.0`, a single token can receive 100% probability.
+- **High temperature (near 1)** — probabilities spread more evenly across options, leading to more varied and creative outputs.
+
+---
+
+#### Choosing the Right Temperature
+
+| Range | Best for |
+|---|---|
+| **0.0 – 0.3** (Low) | Factual responses, coding assistance, data extraction, content moderation |
+| **0.4 – 0.7** (Medium) | Summarisation, educational content, problem-solving, creative writing with constraints |
+| **0.8 – 1.0** (High) | Brainstorming, creative writing, marketing content, joke generation |
+
+---
+
+#### Implementing Temperature in Code
+
+Add `temperature` as an optional parameter to your existing `chat()` function:
+
+```python
+def chat(messages, system=None, temperature=1.0):
+    params = {
+        "model": model,
+        "max_tokens": 1000,
+        "messages": messages,
+        "temperature": temperature
+    }
+
+    if system:
+        params["system"] = system
+
+    message = client.messages.create(**params)
+    return message.content[0].text
+```
+
+The two changes from the previous version: add `temperature=1.0` as a parameter and include `"temperature": temperature` in the `params` dictionary.
+
+---
+
+#### Testing Temperature Effects
+
+To see temperature in action, try generating movie ideas at both extremes:
+
+```python
+# Low temperature - more predictable
+answer = chat(messages, temperature=0.0)
+
+# High temperature - more creative
+answer = chat(messages, temperature=1.0)
+```
+
+At `0.0` you might consistently get *"A time-traveling archaeologist must prevent ancient artifacts from being stolen."* At `1.0` you will see much more variety in themes, characters, and plot elements.
+
+---
+
+#### Key Takeaways
+
+Temperature does not guarantee different outputs — it changes the *probability* of getting them. Even at high temperatures, Claude might occasionally produce similar responses. Match your temperature choice to your use case:
+
+- Need consistent, factual responses? Use low temperature.
+- Want creative brainstorming? Dial up to high temperature.
+- General tasks? Medium temperatures work well for most cases.
+
+---
+
+### Response streaming
+
+**Source:** https://anthropic.skilljar.com/claude-with-the-anthropic-api/287734
+
+#### What you'll learn
+
+*Estimated time: 8 minutes 23 seconds (video)*
+
+By the end of this lesson you'll be able to:
+
+- Explain the UX problem streaming solves and how it works at the event level
+- Identify the five stream event types Claude sends
+- Implement basic streaming with `stream=True` on `client.messages.create()`
+- Use the simplified `client.messages.stream()` interface to display text chunks
+- Retrieve the complete assembled message after streaming with `stream.get_final_message()`
+
+---
+
+#### Video Summary *(8 min 23 sec)*
+
+When building chat applications with Claude, responses can take 10–30 seconds to generate, leaving users staring at a loading spinner. Response streaming lets users see text appear chunk by chunk as Claude generates it, creating a much more responsive feel.
+
+---
+
+#### The Problem with Standard Responses
+
+In a typical chat setup, your server sends a user message to Claude and waits for the complete response before sending anything back to the client. This creates an awkward delay where users have no feedback that anything is happening.
+
+---
+
+#### How Streaming Works
+
+With streaming enabled, Claude immediately sends back an initial response indicating it has received your request and is starting to generate text. You then receive a series of events, each containing a small piece of the overall response. Your server can forward these text chunks to the client as they arrive, allowing users to see the response building word by word — all within a single request to Claude.
+
+---
+
+#### Understanding Stream Events
+
+When streaming is enabled, Claude sends back five types of events:
+
+- **`MessageStart`** — a new message is being sent.
+- **`ContentBlockStart`** — start of a new block containing text, tool use, or other content.
+- **`ContentBlockDelta`** — chunks of the actual generated text (these are the ones to display to users).
+- **`ContentBlockStop`** — the current content block has been completed.
+- **`MessageDelta`** / **`MessageStop`** — the current message is complete and all information has been sent.
+
+---
+
+#### Basic Streaming Implementation
+
+Add `stream=True` to your `messages.create()` call to enable streaming:
+
+```python
+messages = []
+add_user_message(messages, "Write a 1 sentence description of a fake database")
+
+stream = client.messages.create(
+    model=model,
+    max_tokens=1000,
+    messages=messages,
+    stream=True
+)
+
+for event in stream:
+    print(event)
+```
+
+---
+
+#### Simplified Text Streaming
+
+Rather than manually parsing events, use the SDK's `client.messages.stream()` interface, which filters out everything except the actual text content:
+
+```python
+with client.messages.stream(
+    model=model,
+    max_tokens=1000,
+    messages=messages
+) as stream:
+    for text in stream.text_stream:
+        print(text, end="")
+```
+
+This is usually the right approach for displaying responses to users.
+
+---
+
+#### Getting the Complete Message
+
+While streaming individual chunks improves UX, you often also need the complete assembled message for storage or further processing. Retrieve it after streaming completes:
+
+```python
+with client.messages.stream(
+    model=model,
+    max_tokens=1000,
+    messages=messages
+) as stream:
+    for text in stream.text_stream:
+        # Send each chunk to your client
+        pass
+
+    # Get the complete message for database storage
+    final_message = stream.get_final_message()
+```
+
+This gives you the best of both worlds: real-time streaming for users and a complete message object for your application logic.
+
