@@ -977,3 +977,149 @@ After re-running the eval, this revised prompt might score **8.7** — a measura
 
 ---
 
+### Generating test datasets
+
+**Source:** https://anthropic.skilljar.com/claude-with-the-anthropic-api/287739
+
+#### What you'll learn
+
+By the end of this lesson you'll be able to:
+
+- Define a concrete prompt with structured output requirements suitable for evaluation
+- Decide between hand-curating and auto-generating an eval dataset
+- Use Claude (Haiku) with prefilling and stop sequences to generate a JSON eval dataset programmatically
+- Parse and persist the dataset to `dataset.json` for reuse across eval runs
+
+---
+
+#### Overview
+
+Building a prompt evaluation system starts with two things: a well-defined prompt and a dataset of test inputs. This lesson walks through both, using a running example of a prompt that helps users write AWS-specific code.
+
+---
+
+#### Defining the Goal Prompt
+
+The target prompt must return clean, structured output — no explanatory text, headers, or footers — in one of three formats depending on the task:
+
+- Python code
+- JSON configuration files
+- Regular expressions
+
+**Prompt v1 (baseline):**
+
+```python
+prompt = f"""
+Please provide a solution to the following task:
+{task}
+"""
+```
+
+This minimal prompt establishes the baseline score that subsequent iterations must beat.
+
+---
+
+#### What an Eval Dataset Looks Like
+
+An eval dataset is an array of JSON objects, each with a `"task"` property describing what Claude needs to accomplish. Example:
+
+```json
+[
+  { "task": "Description of a Python task for AWS" },
+  { "task": "Description of a JSON config task for AWS" },
+  { "task": "Description of a regex task for AWS" }
+]
+```
+
+The dataset can be assembled by hand or generated automatically using Claude. For test data generation, a faster, cheaper model like **Haiku** is preferred.
+
+---
+
+#### Generating the Dataset with Code
+
+**Helper functions** (reused from earlier lessons):
+
+```python
+def add_user_message(messages, text):
+    user_message = {"role": "user", "content": text}
+    messages.append(user_message)
+
+def add_assistant_message(messages, text):
+    assistant_message = {"role": "assistant", "content": text}
+    messages.append(assistant_message)
+
+def chat(messages, system=None, temperature=1.0, stop_sequences=[]):
+    params = {
+        "model": model,
+        "max_tokens": 1000,
+        "messages": messages,
+        "temperature": temperature
+    }
+    if system:
+        params["system"] = system
+    if stop_sequences:
+        params["stop_sequences"] = stop_sequences
+    response = client.messages.create(**params)
+    return response.content[0].text
+```
+
+**Dataset generation function:**
+
+```python
+def generate_dataset():
+    prompt = """
+Generate an evaluation dataset for a prompt evaluation. The dataset will be used to evaluate prompts that generate Python, JSON, or Regex specifically for AWS-related tasks. Generate an array of JSON objects, each representing a task that requires Python, JSON, or a Regex to complete.
+
+Example output:
+```json
+[
+  {
+    "task": "Description of task",
+  },
+  ...additional
+]
+```
+
+* Focus on tasks that can be solved by writing a single Python function, a single JSON object, or a single regex
+* Focus on tasks that do not require writing much code
+
+Please generate 3 objects.
+"""
+    messages = []
+    add_user_message(messages, prompt)
+    add_assistant_message(messages, "```json")
+    text = chat(messages, stop_sequences=["```"])
+    return json.loads(text)
+```
+
+Key points on this implementation:
+
+- **Prefilling** with ` ```json ` forces Claude to return raw JSON immediately.
+- **Stop sequence** ` ``` ` halts generation before the closing fence, leaving only the array contents.
+- `json.loads(text)` parses the stripped response directly into a Python list.
+
+---
+
+#### Testing and Saving the Dataset
+
+```python
+dataset = generate_dataset()
+print(dataset)
+
+# Persist for reuse across eval runs
+with open('dataset.json', 'w') as f:
+    json.dump(dataset, f, indent=2)
+```
+
+`dataset.json` is saved in the same directory as the notebook and loaded in subsequent evaluation steps — keeping data generation separate from evaluation execution.
+
+---
+
+#### Key Takeaways
+
+- Reusing the **prefilling + stop sequence** pattern from the Structured data lesson is the cleanest way to get parseable JSON out of Claude.
+- Using a **cheaper model (Haiku)** for dataset generation keeps costs low — this is not the task where you need full model quality.
+- Persisting the dataset ensures **reproducible evaluation runs**: the same inputs are used every time you test a new prompt version.
+
+---
+
