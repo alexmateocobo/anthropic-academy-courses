@@ -674,3 +674,134 @@ with client.messages.stream(
 
 This gives you the best of both worlds: real-time streaming for users and a complete message object for your application logic.
 
+---
+
+### Structured data
+
+**Source:** https://anthropic.skilljar.com/claude-with-the-anthropic-api/287732
+
+#### What you'll learn
+
+*Estimated time: 5 minutes 59 seconds (video)*
+
+By the end of this lesson you'll be able to:
+
+- Identify the core problem with Claude's default structured data output
+- Use assistant message prefilling to control the start of Claude's response
+- Add `stop_sequences` to halt generation at a precise point
+- Combine both techniques to extract clean JSON (or other structured formats) without extra commentary
+- Apply the same approach to Python code snippets, bulleted lists, CSV, and other formatted content
+
+---
+
+#### Video Summary *(5 min 59 sec)*
+
+When you need Claude to generate structured data like JSON, Python code, or bulleted lists, you frequently run into the same problem: Claude wants to be helpful and add explanatory text around your content. While this is great in conversational contexts, it creates friction when you need raw, machine-readable output that can be used directly in an application.
+
+---
+
+#### The Problem with Default Responses
+
+Consider a web app that generates AWS EventBridge rules. Users enter a description, click generate, and expect clean JSON they can immediately copy and use. By default, Claude wraps the JSON in markdown code fences and appends a prose explanation:
+
+````
+```json
+{
+  "source": ["aws.ec2"],
+  "detail-type": ["EC2 Instance State-change Notification"],
+  "detail": {
+    "state": ["running"]
+  }
+}
+```
+
+This rule captures EC2 instance state changes when instances start running.
+````
+
+The JSON is correct, but users cannot copy the entire response — they have to manually select just the JSON portion. This is unacceptable UX for a generation tool.
+
+---
+
+#### The Solution: Assistant Message Prefilling + Stop Sequences
+
+Combine **assistant message prefilling** with **stop sequences** to extract exactly the content you want with nothing else.
+
+```python
+messages = []
+
+add_user_message(messages, "Generate a very short event bridge rule as json")
+add_assistant_message(messages, "```json")
+
+text = chat(messages, stop_sequences=["```"])
+```
+
+The technique works in four steps:
+
+1. The user message tells Claude what to generate.
+2. The prefilled assistant message makes Claude believe it already started a markdown code block.
+3. Claude continues by writing just the JSON content (since the opening fence is already "there").
+4. When Claude tries to close the block with ` ``` `, the stop sequence triggers and halts generation immediately.
+
+The result is clean JSON with no extra formatting or commentary.
+
+---
+
+#### Updating the `chat()` Function
+
+To support stop sequences, add a `stop_sequences` parameter to your existing `chat()` function:
+
+```python
+def chat(messages, system=None, temperature=1.0, stop_sequences=None):
+    params = {
+        "model": model,
+        "max_tokens": 1000,
+        "messages": messages,
+        "temperature": temperature,
+    }
+
+    if system:
+        params["system"] = system
+
+    if stop_sequences:
+        params["stop_sequences"] = stop_sequences
+
+    message = client.messages.create(**params)
+    return message.content[0].text
+```
+
+---
+
+#### Processing the Response
+
+The returned text may contain leading/trailing newline characters. Strip them before parsing:
+
+```python
+import json
+
+# Clean up and parse the JSON
+clean_json = json.loads(text.strip())
+```
+
+---
+
+#### Beyond JSON
+
+This technique is not limited to JSON. Use it any time you need structured output without commentary:
+
+- Python code snippets (prefill with ` ```python `, stop on ` ``` `)
+- Bulleted lists
+- CSV data
+- Any formatted content where you want just the content, not explanations
+
+The key is identifying what Claude naturally wants to wrap your content in, then using that opening marker as your prefill and the closing marker as your stop sequence.
+
+---
+
+#### Key Takeaways
+
+- **Prefilling** steers Claude into a specific output format by providing the opening of its response.
+- **Stop sequences** cut generation at exactly the right point, preventing closing markers and trailing commentary from appearing.
+- Together, these two parameters give you precise, programmatic control over Claude's output — essential for integrating AI-generated content into applications that consume structured data.
+
+---
+
