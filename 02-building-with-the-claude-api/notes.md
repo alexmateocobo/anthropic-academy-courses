@@ -805,3 +805,65 @@ The key is identifying what Claude naturally wants to wrap your content in, then
 
 ---
 
+## Lesson 2 — Prompt evaluation
+
+### Prompt evaluation
+
+**Source:** https://anthropic.skilljar.com/claude-with-the-anthropic-api/287731
+
+#### What you'll learn
+
+*Estimated time: 1 minute 48 seconds (video)*
+
+By the end of this lesson you'll be able to:
+
+- Distinguish prompt engineering from prompt evaluation and explain why both are necessary
+- Recognise the three paths available after writing a prompt and the risks of each
+- Articulate why engineers systematically under-test prompts in practice
+- Explain the evaluation-first approach and the advantages it provides
+
+---
+
+#### Video Summary *(1 min 48 sec)*
+
+Writing a good prompt is just the beginning. To build reliable AI applications you need two complementary disciplines: **prompt engineering** (techniques for crafting effective prompts) and **prompt evaluation** (systematically measuring how well those prompts perform).
+
+---
+
+#### Prompt Engineering vs. Prompt Evaluation
+
+**Prompt engineering** is the toolkit for writing effective prompts. It includes techniques such as multishot prompting, structuring inputs with XML tags, and other best practices that help Claude understand exactly what you are asking for and how you want it to respond.
+
+**Prompt evaluation** takes a different angle. Instead of focusing on *how* to write prompts, it focuses on *measuring* their effectiveness through automated testing — running prompts against expected answers, comparing versions, and reviewing outputs for errors.
+
+---
+
+#### Three Paths After Writing a Prompt
+
+Once a prompt is drafted, there are three options for what to do next:
+
+1. **Test once and ship** — decide it is good enough after a single run. High risk: the prompt will break in production when users provide unexpected inputs.
+2. **Test a few times and tweak** — handle one or two corner cases manually. Better, but users will still encounter edge cases that were never considered.
+3. **Run an evaluation pipeline** — score the prompt against objective metrics, then iterate based on the data. Requires more upfront investment in time and infrastructure, but provides significantly greater confidence in reliability.
+
+---
+
+#### Why Engineers Fall Into Testing Traps
+
+Options 1 and 2 are common traps. It is natural to write a prompt for a serious application and not test it thoroughly enough — we systematically underestimate how many edge cases real users will encounter. What seemed like a solid prompt during limited testing can break down quickly when exposed to the full variety of real-world inputs.
+
+---
+
+#### The Evaluation-First Approach
+
+Option 3 represents a systematic, data-driven approach to prompt development. Running prompts through an evaluation pipeline allows you to:
+
+- Identify weaknesses before they become production issues
+- Compare different prompt versions objectively
+- Iterate with confidence based on measurable improvements
+- Build more reliable AI applications overall
+
+The upfront cost in testing infrastructure pays dividends in the robustness of the final application. The goal is to catch problems during development — not after users encounter them.
+
+---
+
