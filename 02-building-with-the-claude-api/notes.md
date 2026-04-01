@@ -805,7 +805,7 @@ The key is identifying what Claude naturally wants to wrap your content in, then
 
 ---
 
-## Lesson 2 — Prompt evaluation
+## Lesson 2 — Prompt Evaluation
 
 ### Prompt evaluation
 
@@ -864,6 +864,116 @@ Option 3 represents a systematic, data-driven approach to prompt development. Ru
 - Build more reliable AI applications overall
 
 The upfront cost in testing infrastructure pays dividends in the robustness of the final application. The goal is to catch problems during development — not after users encounter them.
+
+---
+
+### A typical eval workflow
+
+**Source:** https://anthropic.skilljar.com/claude-with-the-anthropic-api/287736
+
+#### What you'll learn
+
+By the end of this lesson you'll be able to:
+
+- Describe the five-step eval loop and what happens at each stage
+- Construct a minimal eval dataset and explain how to scale it
+- Explain how a grader scores Claude's outputs and why numerical scoring matters
+- Iterate on a prompt using objective scores as the decision criterion
+
+---
+
+#### Overview
+
+A typical prompt evaluation workflow follows five repeating steps that let you improve prompts through objective measurement. The same core process applies regardless of whether you use open-source tooling or a paid platform — understanding it lets you start small and scale up as needed.
+
+---
+
+#### Step 1 — Draft a Prompt
+
+Write an initial prompt to use as a baseline. Keep it simple at first; the goal is to establish a reference score you can beat.
+
+```python
+prompt = f"""
+Please answer the user's question:
+
+{question}
+"""
+```
+
+---
+
+#### Step 2 — Create an Eval Dataset
+
+The eval dataset contains sample inputs representing the types of requests your prompt will handle in production. Each item is interpolated into the prompt template at runtime.
+
+Example dataset (three questions):
+
+- `"What's 2+2?"`
+- `"How do I make oatmeal?"`
+- `"How far away is the Moon?"`
+
+In real-world evaluations the dataset may contain tens, hundreds, or thousands of records. You can assemble these by hand or use Claude to generate them for you.
+
+---
+
+#### Step 3 — Feed Through Claude
+
+Merge each dataset item with the prompt template to produce a complete prompt, then send each one to Claude and collect the responses.
+
+Example — the math question becomes:
+
+```
+Please answer the user's question:
+
+What's 2+2?
+```
+
+Claude might return `"2 + 2 = 4"` for the math question, oatmeal cooking instructions for the second, and the distance to the Moon for the third.
+
+---
+
+#### Step 4 — Feed Through a Grader
+
+The grader evaluates Claude's responses by examining both the original question and Claude's answer, producing a numerical score — typically 1 to 10, where 10 is a perfect answer.
+
+Example scores:
+
+| Question | Score | Reason |
+|---|---|---|
+| Math (`2+2`) | 10 | Perfect answer |
+| Oatmeal | 4 | Needs improvement |
+| Moon distance | 9 | Very good answer |
+
+Average: (10 + 4 + 9) ÷ 3 = **7.66**
+
+---
+
+#### Step 5 — Change Prompt and Repeat
+
+With a baseline score in hand, modify the prompt and run the full pipeline again to see whether the change improves performance.
+
+Example improvement — adding an instruction for depth:
+
+```python
+prompt = f"""
+Please answer the user's question:
+
+{question}
+
+Answer the question with ample detail
+"""
+```
+
+After re-running the eval, this revised prompt might score **8.7** — a measurable improvement over the baseline 7.66.
+
+---
+
+#### Key Takeaways
+
+- **Numerical scores** let you compare prompt versions objectively rather than relying on gut feel.
+- **Dataset scale matters** — a handful of test cases misses the edge cases real users will hit; aim for breadth and diversity.
+- **Iteration is the point** — the workflow is a loop: draft → evaluate → score → revise → repeat until performance meets your bar.
+- This approach removes guesswork from prompt engineering and gives you confidence that changes are genuine improvements, not just different variations.
 
 ---
 
