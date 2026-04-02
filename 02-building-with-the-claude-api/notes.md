@@ -1512,6 +1512,160 @@ The evaluator returns both a numerical average score and a detailed HTML report 
 
 ---
 
+### Being clear and direct
+
+**Source:** https://anthropic.skilljar.com/claude-with-the-anthropic-api/287744
+
+#### What you'll learn
+
+By the end of this lesson you'll be able to:
+
+- Explain why the first line of a prompt is the most consequential
+- Distinguish between clarity (what you want) and directness (how you structure the ask)
+- Rewrite vague or question-based prompts as direct, action-verb-led instructions
+- Quantify the impact of this technique using eval scores
+
+---
+
+#### Overview
+
+The first line of a prompt sets the stage for everything that follows. Getting it right — with clarity and directness — is the highest-leverage single change you can make to a prompt.
+
+---
+
+#### Two Principles
+
+**Clarity — what you want**
+
+- Use simple language that leaves no room for ambiguity.
+- State exactly what you want without circumlocution.
+- Lead with a straightforward statement of the task.
+
+Weak: *"I need to know about those things people put on their roofs that use sun — those solar panel things, I think they're called."*
+Strong: *"Write three paragraphs about how solar panels work."*
+
+**Directness — how you structure the request**
+
+- Use instructions, not questions.
+- Start with an action verb.
+- Be specific about the desired output.
+
+Weak: *"Can you tell me about some countries that use geothermal energy?"*
+Strong: *"List five countries that use geothermal energy. Include generation stats for each."*
+
+---
+
+#### Applying to the Running Example
+
+The baseline meal plan prompt opened with: `"What should this person eat?"` — a question with no action verb, no output specification, and no constraints stated up front.
+
+The improved version: `"Generate a one-day meal plan for an athlete that meets their dietary restrictions."`
+
+This single-line revision immediately communicates:
+
+- **What action to take** — generate
+- **What to create** — a meal plan
+- **Key constraints** — one day, for an athlete, meeting dietary restrictions
+
+---
+
+#### Measured Impact
+
+| Prompt version | Average eval score |
+|---|---|
+| Baseline (`"What should this person eat?"`) | 2.32 |
+| After applying clear & direct | 3.92 |
+
+A ~70% score increase from restructuring a single line.
+
+---
+
+#### Key Takeaway
+
+Treat Claude like a capable assistant who needs clear direction, not someone who has to guess your intent. Lead with a direct action verb, specify the output, and state constraints up front — before adding any supporting context.
+
+---
+
+### Being specific
+
+**Source:** https://anthropic.skilljar.com/claude-with-the-anthropic-api/287740
+
+#### What you'll learn
+
+By the end of this lesson you'll be able to:
+
+- Explain why specificity reduces output variance and improves quality
+- Distinguish between output quality guidelines and process steps
+- Know when to apply each type and when to combine them
+- Quantify the impact of specificity using eval scores
+
+---
+
+#### Overview
+
+Without specific guidelines, Claude has to infer intent — and a single vague prompt can produce wildly different outputs in terms of length, structure, tone, and content. Being specific gives Claude a precise target, dramatically improving both consistency and quality.
+
+---
+
+#### Two Types of Guidelines
+
+**Output quality guidelines** — list qualities the output must have. Control:
+
+- Length and format
+- Specific attributes or elements to include
+- Tone or style requirements
+
+Example for a story prompt: *under 1,000 words, include a clear action that reveals the character's talent, feature at least one supporting character.*
+
+**Process steps** — provide an explicit sequence for Claude to follow before producing the final answer. Useful when you want systematic reasoning across multiple perspectives rather than an immediate response.
+
+Example for a story prompt:
+1. Brainstorm three talents that would create dramatic tension
+2. Pick the most interesting talent
+3. Outline a pivotal scene that reveals the talent
+4. Brainstorm supporting character types that could increase the impact
+
+---
+
+#### When to Use Each
+
+| Approach | When to use |
+|---|---|
+| **Output guidelines** | Almost every prompt — they are the baseline safety net for consistent results |
+| **Process steps** | Complex troubleshooting, decision-making, critical thinking, any task requiring multiple perspectives |
+
+Example of process steps for a business problem: analysing a sales team performance drop, you would guide Claude through market metrics, industry changes, individual performance, organisational changes, and customer feedback — rather than letting it fixate on one cause.
+
+In professional prompting, both are frequently combined: guidelines control the output shape; process steps ensure thorough reasoning before the output is generated.
+
+---
+
+#### Measured Impact on the Running Example
+
+Adding six explicit output guidelines to the meal plan prompt:
+
+1. Include accurate daily calorie amount
+2. Show protein, fat, and carb amounts
+3. Specify when to eat each meal
+4. Use only foods that fit restrictions
+5. List all portion sizes in grams
+6. Keep budget-friendly if mentioned
+
+| Prompt version | Average eval score |
+|---|---|
+| After "clear & direct" | 3.92 |
+| After adding specificity guidelines | 7.86 |
+
+More than doubling the score simply by telling Claude exactly what elements to include.
+
+---
+
+#### Key Takeaway
+
+Output quality guidelines belong in almost every prompt — they eliminate guesswork about format, length, and content. Process steps are the tool for tasks requiring structured reasoning. Used together, they deliver both consistent output shape and confidence that Claude has considered all relevant factors before responding.
+
+---
+
 ## Lesson 2 — Prompt Evaluation
 
 ### Promp engineering techniques
