@@ -1241,3 +1241,144 @@ The verbose output at this stage is a clear signal: without explicit formatting 
 
 ---
 
+### Model based grading
+
+**Source:** https://anthropic.skilljar.com/claude-with-the-anthropic-api/287742
+
+#### What you'll learn
+
+By the end of this lesson you'll be able to:
+
+- Distinguish the three grader types (code, model, human) and select the right one for each criterion
+- Define concrete evaluation criteria for a code generation prompt
+- Implement a `grade_by_model` function that returns structured JSON with score and reasoning
+- Explain why asking for strengths, weaknesses, and reasoning produces more reliable scores
+- Wire the grader into `run_test_case` and compute an average score across the full dataset
+
+---
+
+#### Overview
+
+A grader takes model output and returns a measurable quality signal — typically a number from 1 (poor) to 10 (high quality). There are three approaches, each with different trade-offs.
+
+---
+
+#### Types of Graders
+
+**Code graders** — programmatic checks implemented in custom logic. Common uses:
+
+- Checking output length
+- Verifying presence or absence of specific words
+- Syntax validation for JSON, Python, or regex
+- Readability scores
+
+The only requirement is that the function returns a usable numeric signal.
+
+**Model graders** — feed the original output into a second API call for evaluation. Highly flexible; well-suited for assessing response quality, instruction following, completeness, helpfulness, and safety.
+
+**Human graders** — manual review. Most flexible but time-consuming. Useful for evaluating general quality, comprehensiveness, depth, conciseness, and relevance.
+
+---
+
+#### Defining Evaluation Criteria
+
+Before implementing any grader, define clear criteria. For a code generation prompt, three criteria apply:
+
+| Criterion | Description | Best grader |
+|---|---|---|
+| **Format** | Returns only Python, JSON, or regex without explanation | Code grader |
+| **Valid syntax** | Produced code has valid syntax | Code grader |
+| **Task following** | Response directly addresses the task with accurate code | Model grader |
+
+The first two are deterministic checks — ideal for code graders. Task following requires semantic judgement, which is why a model grader is more appropriate.
+
+---
+
+#### Implementing a Model Grader
+
+```python
+def grade_by_model(test_case, output):
+    task = test_case["task"]
+    solution = output
+
+    eval_prompt = f"""
+    You are an expert code reviewer. Evaluate this AI-generated solution.
+
+    Task: {task}
+    Solution: {solution}
+
+    Provide your evaluation as a structured JSON object with:
+    - "strengths": An array of 1-3 key strengths
+    - "weaknesses": An array of 1-3 key areas for improvement
+    - "reasoning": A concise explanation of your assessment
+    - "score": A number between 1-10
+    """
+
+    messages = []
+    add_user_message(messages, eval_prompt)
+    add_assistant_message(messages, "```json")
+
+    eval_text = chat(messages, stop_sequences=["```"])
+    return json.loads(eval_text)
+```
+
+**Key design insight:** asking for `strengths`, `weaknesses`, and `reasoning` alongside the score prevents the model from defaulting to middling scores around 6. The structured context forces a more deliberate, calibrated assessment.
+
+The prefilling + stop sequence pattern is reused here to extract clean, parseable JSON from the grader response.
+
+---
+
+#### Wiring the Grader into the Pipeline
+
+Update `run_test_case` to call the grader and propagate `score` and `reasoning`:
+
+```python
+def run_test_case(test_case):
+    output = run_prompt(test_case)
+
+    model_grade = grade_by_model(test_case, output)
+    score = model_grade["score"]
+    reasoning = model_grade["reasoning"]
+
+    return {
+        "output": output,
+        "test_case": test_case,
+        "score": score,
+        "reasoning": reasoning
+    }
+```
+
+Update `run_eval` to compute and print the average score:
+
+```python
+from statistics import mean
+
+def run_eval(dataset):
+    results = []
+
+    for test_case in dataset:
+        result = run_test_case(test_case)
+        results.append(result)
+
+    average_score = mean([result["score"] for result in results])
+    print(f"Average score: {average_score}")
+
+    return results
+```
+
+The average score is the single objective metric used to compare prompt versions. While model graders can be somewhat variable, they provide a consistent enough baseline for tracking incremental improvements.
+
+---
+
+#### Key Takeaways
+
+- Match grader type to criterion: deterministic checks → code grader; semantic judgement → model grader.
+- Requesting structured reasoning alongside the score is critical — it stabilises grader output and prevents score compression toward the middle.
+- The prefilling + stop sequence pattern appears again here, reinforcing it as the standard technique for extracting structured data from Claude.
+- The average score across all test cases is the core iteration signal: run eval → tweak prompt → run eval again → compare averages.
+
+---
+
+## Lesson 2 — Prompt Evaluation
+
+### Promp engineering techniques
