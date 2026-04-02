@@ -1123,3 +1123,121 @@ with open('dataset.json', 'w') as f:
 
 ---
 
+### Running the eval
+
+**Source:** https://anthropic.skilljar.com/claude-with-the-anthropic-api/287743
+
+#### What you'll learn
+
+By the end of this lesson you'll be able to:
+
+- Implement the three core functions of an eval pipeline (`run_prompt`, `run_test_case`, `run_eval`)
+- Explain the responsibility of each function and how they compose
+- Execute the pipeline against a persisted dataset and interpret the structured results
+- Identify what the hardcoded placeholder score reveals about the next step (grading)
+
+---
+
+#### Overview
+
+With the eval dataset ready, this lesson builds the core evaluation pipeline: take each test case, merge it with the prompt template, send it to Claude, grade the result, and collect structured output. The grading logic is intentionally deferred — a placeholder score of `10` keeps the pipeline testable while the focus is on the overall scaffold.
+
+---
+
+#### The Three Core Functions
+
+**`run_prompt` — merges the prompt template with one test case and returns Claude's output**
+
+```python
+def run_prompt(test_case):
+    """Merges the prompt and test case input, then returns the result"""
+    prompt = f"""
+Please solve the following task:
+
+{test_case["task"]}
+"""
+    messages = []
+    add_user_message(messages, prompt)
+    output = chat(messages)
+    return output
+```
+
+The prompt is intentionally minimal at this stage — no formatting instructions yet. Claude will return verbose output, which is expected and will be addressed during prompt iteration.
+
+---
+
+**`run_test_case` — runs one test case end-to-end and returns a scored result object**
+
+```python
+def run_test_case(test_case):
+    """Calls run_prompt, then grades the result"""
+    output = run_prompt(test_case)
+
+    # TODO - Grading
+    score = 10
+
+    return {
+        "output": output,
+        "test_case": test_case,
+        "score": score
+    }
+```
+
+The hardcoded `score = 10` is a placeholder. It keeps the pipeline functional and the result schema stable while the grading logic is built out in subsequent lessons.
+
+---
+
+**`run_eval` — iterates over the full dataset and collects all results**
+
+```python
+def run_eval(dataset):
+    """Loads the dataset and calls run_test_case with each case"""
+    results = []
+    for test_case in dataset:
+        result = run_test_case(test_case)
+        results.append(result)
+    return results
+```
+
+---
+
+#### Executing the Pipeline
+
+Load the persisted dataset and run the eval:
+
+```python
+with open("dataset.json", "r") as f:
+    dataset = json.load(f)
+
+results = run_eval(dataset)
+```
+
+Even with Claude Haiku, expect ~30 seconds for a full dataset run. Performance optimisation is covered later.
+
+---
+
+#### Examining the Results
+
+Each result object contains three fields:
+
+- **`output`** — Claude's complete response to the test case
+- **`test_case`** — the original input object from the dataset
+- **`score`** — the evaluation score (hardcoded `10` for now)
+
+```python
+print(json.dumps(results, indent=2))
+```
+
+The verbose output at this stage is a clear signal: without explicit formatting instructions, Claude adds explanation and context around the raw structured content. This is exactly what the next prompt iteration will address.
+
+---
+
+#### Key Takeaways
+
+- The three-function structure (`run_prompt` → `run_test_case` → `run_eval`) cleanly separates concerns: prompt rendering, per-case orchestration, and dataset iteration.
+- The hardcoded score is intentional scaffolding — it proves the pipeline works before investing in grading logic.
+- This scaffold represents the majority of what any eval pipeline does; complexity comes from better prompts, real grading, and performance optimisation.
+- The next step is replacing the placeholder score with a real grader.
+
+---
+
