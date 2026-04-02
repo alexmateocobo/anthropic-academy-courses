@@ -1379,6 +1379,139 @@ The average score is the single objective metric used to compare prompt versions
 
 ---
 
+## Lesson 3 — Prompt engineering techniques
+
+### Prompt engineering
+
+**Source:** https://anthropic.skilljar.com/claude-with-the-anthropic-api/287745
+
+#### What you'll learn
+
+By the end of this lesson you'll be able to:
+
+- Describe the iterative prompt improvement cycle and when to stop iterating
+- Set up a `PromptEvaluator` instance with controlled concurrency
+- Generate a typed eval dataset using `evaluator.generate_dataset()` with a `prompt_inputs_spec`
+- Write a naive baseline prompt and understand why low initial scores (~2–3/10) are expected
+- Pass `extra_criteria` into `evaluator.run_evaluation()` to target domain-specific requirements
+- Interpret HTML evaluation reports to identify where a prompt is failing
+
+---
+
+#### Overview
+
+Prompt engineering is the process of taking an initial prompt and iteratively refining it to produce more reliable, higher-quality outputs. Each iteration applies a specific technique and is validated against objective evaluation scores — no changes are kept unless they demonstrably improve the average.
+
+---
+
+#### The Iterative Improvement Cycle
+
+1. **Set a goal** — define what the prompt must accomplish.
+2. **Write an initial prompt** — create a simple baseline; do not over-engineer it.
+3. **Evaluate the prompt** — run it through the eval pipeline and record the score.
+4. **Apply a prompt engineering technique** — make one targeted change.
+5. **Re-evaluate** — verify the change produced a measurable improvement.
+6. Repeat steps 4–5 until performance meets the target.
+
+---
+
+#### Running Example: Athlete Meal Plans
+
+The lesson uses a prompt that generates one-day meal plans for athletes, given height, weight, goal, and dietary restrictions — a realistic case where output quality is easy to grade semantically.
+
+---
+
+#### Setting Up the Evaluator
+
+The `PromptEvaluator` class handles dataset generation and model grading. Control concurrency with `max_concurrent_tasks` to avoid rate limit errors:
+
+```python
+evaluator = PromptEvaluator(max_concurrent_tasks=5)
+```
+
+Start at `3` and increase only if your API quota allows it.
+
+---
+
+#### Generating a Typed Eval Dataset
+
+Define the prompt's required inputs via `prompt_inputs_spec` — the evaluator uses these to auto-generate realistic test cases:
+
+```python
+dataset = evaluator.generate_dataset(
+    task_description="Write a compact, concise 1 day meal plan for a single athlete",
+    prompt_inputs_spec={
+        "height": "Athlete's height in cm",
+        "weight": "Athlete's weight in kg",
+        "goal": "Goal of the athlete",
+        "restrictions": "Dietary restrictions of the athlete"
+    },
+    output_file="dataset.json",
+    num_cases=3
+)
+```
+
+Keep `num_cases` at 2–3 during development for fast iteration; increase for final validation.
+
+---
+
+#### Writing the Baseline Prompt
+
+Start deliberately simple — the baseline exists only to establish a score floor:
+
+```python
+def run_prompt(prompt_inputs):
+    prompt = f"""
+What should this person eat?
+
+- Height: {prompt_inputs["height"]}
+- Weight: {prompt_inputs["weight"]}
+- Goal: {prompt_inputs["goal"]}
+- Dietary restrictions: {prompt_inputs["restrictions"]}
+"""
+    messages = []
+    add_user_message(messages, prompt)
+    return chat(messages)
+```
+
+A score of ~2.3/10 on a first attempt is normal. Low initial scores are useful — they give more room to demonstrate measurable improvement.
+
+---
+
+#### Running the Evaluation with Extra Criteria
+
+Pass domain-specific requirements via `extra_criteria` so the grader scores against what actually matters:
+
+```python
+results = evaluator.run_evaluation(
+    run_prompt_function=run_prompt,
+    dataset_file="dataset.json",
+    extra_criteria="""
+The output should include:
+- Daily caloric total
+- Macronutrient breakdown
+- Meals with exact foods, portions, and timing
+"""
+)
+```
+
+---
+
+#### Analysing Results
+
+The evaluator returns both a numerical average score and a detailed HTML report showing per-test-case performance and the grader's reasoning for each score. Use the report to pinpoint exactly where the prompt is failing before selecting which technique to apply next.
+
+---
+
+#### Key Takeaways
+
+- Never skip the baseline — a low score is informative, not discouraging.
+- Apply **one technique at a time** and re-evaluate; stacking multiple changes makes it impossible to attribute score changes to a specific improvement.
+- `extra_criteria` is the lever for domain alignment — it ensures the grader cares about the same things the end user does.
+- The HTML report is the primary debugging tool: read the reasoning, not just the number.
+
+---
+
 ## Lesson 2 — Prompt Evaluation
 
 ### Promp engineering techniques
